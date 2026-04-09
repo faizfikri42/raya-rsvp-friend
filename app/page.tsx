@@ -5,13 +5,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 // ─── CUSTOMIZE YOUR EVENT DETAILS HERE ────────────────────────────────────────
 const EVENT_HOST = 'Open House Raya';          // e.g. "Hafiz & Adibah"
 const EVENT_DATE = 'XX April 2026';            // e.g. "20 April 2026"
-const EVENT_DATE_SUB = '12 Tengah Hari sampai makanan habis 😋';
+const EVENT_DATE_SUB = '1 Tengah Hari sampai 8 Malam';
 const GOOGLE_MAPS_URL = 'https://maps.google.com'; // paste your Google Maps share link
 const WAZE_URL = 'https://waze.com';               // paste your Waze share link
 // ──────────────────────────────────────────────────────────────────────────────
 
 type FormData = {
+  name: string;
   attending: 'yes' | 'no' | '';
+  time_slot: string;
   guest_count: number | null;
   car_plate: string;
   message: string;
@@ -20,11 +22,21 @@ type FormData = {
 type Direction = 'up' | 'down';
 
 const GUEST_OPTIONS = [
-  { value: 1, letter: 'A', label: 'Saya single', sub: '1 orang je' },
-  { value: 2, letter: 'B', label: 'Mestilah bawak +1', sub: '2 orang' },
+  { value: 1, letter: 'A', label: 'Saya sorang je', sub: '1 orang' },
+  { value: 2, letter: 'B', label: 'Bawak +1', sub: '2 orang' },
   { value: 3, letter: 'C', label: '3 orang', sub: 'Ramai sikit' },
   { value: 4, letter: 'D', label: '4 orang', sub: 'Rombongan dah ni' },
 ];
+
+const TIME_OPTIONS = [
+  { value: '1pm - 3pm', letter: 'A', label: '1pm – 3pm', sub: 'Tengah hari' },
+  { value: '3pm - 5pm', letter: 'B', label: '3pm – 5pm', sub: 'Petang awal' },
+  { value: '5pm - 7pm', letter: 'C', label: '5pm – 7pm', sub: 'Petang lewat' },
+  { value: '7pm - 8pm', letter: 'D', label: '7pm – 8pm', sub: 'Malam' },
+];
+
+// Steps: 0=name, 1=attending, 2=time_slot(yes), 3=guest_count(yes), 4=car_plate(yes), 5=message
+// Not attending path: 0 → 1 → 5
 
 export default function RsvpPage() {
   const [started, setStarted] = useState(false);
@@ -32,7 +44,9 @@ export default function RsvpPage() {
   const [direction, setDirection] = useState<Direction>('up');
   const [stepKey, setStepKey] = useState(0);
   const [data, setData] = useState<FormData>({
+    name: '',
     attending: '',
+    time_slot: '',
     guest_count: null,
     car_plate: '',
     message: '',
@@ -42,13 +56,15 @@ export default function RsvpPage() {
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
-  // Steps: 0=attending, 1=guest_count, 2=car_plate, 3=message
-  // If not attending, after step 0 jump straight to step 3
-
-  const totalSteps = data.attending === 'no' ? 2 : 4;
-  const progressIndex =
-    data.attending === 'no' ? (step === 0 ? 0 : 1) : step;
-  const progress = Math.min((progressIndex / (totalSteps - 1)) * 100, 100);
+  // Progress calculation
+  // Not attending: [0,1,5] → 3 steps
+  // Attending:     [0,1,2,3,4,5] → 6 steps
+  const totalSteps = data.attending === 'no' ? 3 : 6;
+  function progressIndex(s: number) {
+    if (data.attending === 'no') return s === 5 ? 2 : s; // 0→0, 1→1, 5→2
+    return s; // 0-5
+  }
+  const progress = Math.min((progressIndex(step) / (totalSteps - 1)) * 100, 100);
 
   function navigate(toStep: number, dir: Direction) {
     setDirection(dir);
@@ -57,13 +73,15 @@ export default function RsvpPage() {
   }
 
   function goNext() {
-    if (step === 2) { navigate(3, 'up'); return; }
-    if (step === 3) { handleSubmit(); return; }
+    if (step === 0 && !data.name.trim()) return;
+    if (step === 4) { navigate(5, 'up'); return; }
+    if (step === 5) { handleSubmit(); return; }
   }
 
   function goBack() {
     if (step === 0) return;
-    if (step === 3 && data.attending === 'no') { navigate(0, 'down'); return; }
+    if (step === 5 && data.attending === 'no') { navigate(1, 'down'); return; }
+    if (step === 5 && data.attending === 'yes') { navigate(4, 'down'); return; }
     navigate(step - 1, 'down');
   }
 
@@ -75,7 +93,9 @@ export default function RsvpPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: data.name,
           attending: data.attending,
+          time_slot: data.time_slot,
           guest_count: data.guest_count,
           car_plate: data.car_plate,
           message: data.message,
@@ -94,20 +114,19 @@ export default function RsvpPage() {
     }
   }
 
-  // Focus input when step changes
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 480);
     return () => clearTimeout(timer);
   }, [step, stepKey]);
 
-  // Enter key handler for text inputs
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        if (step === 2) goNext();
+        if (step === 0 && data.name.trim()) goNext();
+        if (step === 4) goNext();
       }
     },
-    [step]
+    [step, data.name]
   );
 
   useEffect(() => {
@@ -115,6 +134,7 @@ export default function RsvpPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // ── Landing ──────────────────────────────────────────────────────────────────
   if (!started) {
     return (
       <div className="min-h-screen bg-[#0d2418] flex items-center justify-center p-6">
@@ -143,7 +163,6 @@ export default function RsvpPage() {
             Jangan malu, jangan segan — makan banyak-banyak! 😄
           </p>
 
-          {/* Event details card */}
           <div className="bg-emerald-950/60 border border-emerald-800 rounded-2xl px-6 py-5 mb-8 text-left space-y-3">
             <div className="flex items-start gap-3">
               <span className="text-xl mt-0.5">📅</span>
@@ -201,21 +220,19 @@ export default function RsvpPage() {
     );
   }
 
+  // ── Success ──────────────────────────────────────────────────────────────────
   if (submitted) {
     return (
       <div className="min-h-screen bg-[#0d2418] flex items-center justify-center p-6">
         <div className="text-center max-w-md animate-slide-up">
           <div className="text-5xl mb-4">🌙✨</div>
+          <h2 className="text-4xl font-bold text-white mb-2">
+            Terima kasih, {data.name.split(' ')[0]}!
+          </h2>
           {data.attending === 'yes' ? (
-            <>
-              <h2 className="text-4xl font-bold text-white mb-2">Terima kasih!</h2>
-              <p className="text-emerald-300 text-lg mb-6">Jumpa Nanti!! 😄</p>
-            </>
+            <p className="text-emerald-300 text-lg mb-6">Jumpa Nanti!! 😄</p>
           ) : (
-            <>
-              <h2 className="text-4xl font-bold text-white mb-2">Terima kasih!</h2>
-              <p className="text-emerald-300 text-lg mb-6">Takpe, lain kali kita jumpa! 😊</p>
-            </>
+            <p className="text-emerald-300 text-lg mb-6">Takpe, lain kali kita jumpa! 😊</p>
           )}
           <p className="text-amber-400 font-semibold text-lg">Selamat Hari Raya Aidilfitri 🌟</p>
           <p className="text-emerald-600 text-sm mt-1">Maaf Zahir & Batin</p>
@@ -224,6 +241,7 @@ export default function RsvpPage() {
     );
   }
 
+  // ── Form ─────────────────────────────────────────────────────────────────────
   const animClass = direction === 'up' ? 'animate-slide-up' : 'animate-slide-down';
 
   return (
@@ -236,32 +254,61 @@ export default function RsvpPage() {
         />
       </div>
 
-      {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-6 py-16">
         <div key={stepKey} className={`w-full max-w-xl ${animClass}`}>
 
-          {/* Step 0: Attending */}
+          {/* Step 0: Name */}
           {step === 0 && (
             <div>
               <p className="text-amber-400 text-sm font-semibold mb-2 flex items-center gap-2">
-                <span>01</span>
-                <span className="text-amber-600">→</span>
+                <span>01</span><span className="text-amber-600">→</span>
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 leading-tight">
+                Eh, siapa tu? 👋<br />
+                <span className="text-emerald-300">Nama apa ya?</span>
+              </h2>
+              <input
+                ref={inputRef as React.RefObject<HTMLInputElement>}
+                type="text"
+                value={data.name}
+                onChange={e => setData(d => ({ ...d, name: e.target.value }))}
+                onKeyDown={e => e.key === 'Enter' && data.name.trim() && goNext()}
+                placeholder="Type nama disini..."
+                className="w-full bg-transparent border-b-2 border-emerald-600 focus:border-amber-400 text-white text-2xl py-3 outline-none placeholder:text-emerald-800 transition-colors caret-amber-400"
+              />
+              <div className="mt-8 flex items-center gap-4">
+                <button
+                  onClick={goNext}
+                  disabled={!data.name.trim()}
+                  className="bg-amber-400 hover:bg-amber-300 disabled:opacity-30 disabled:cursor-not-allowed text-emerald-950 font-bold px-7 py-3 rounded-lg transition-all text-base"
+                >
+                  OK &nbsp;✓
+                </button>
+                <span className="text-emerald-700 text-sm">atau tekan <kbd className="bg-emerald-900 text-emerald-300 px-2 py-0.5 rounded text-xs">Enter ↵</kbd></span>
+              </div>
+            </div>
+          )}
+
+          {/* Step 1: Attending */}
+          {step === 1 && (
+            <div>
+              <p className="text-amber-400 text-sm font-semibold mb-2 flex items-center gap-2">
+                <span>02</span><span className="text-amber-600">→</span>
               </p>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">
-                Assalamualaikum! 🎉
+                Holla <span className="text-amber-400">{data.name.split(' ')[0]}</span>! 🎉
               </h2>
               <p className="text-emerald-300 text-xl mb-8">Datang tak ke open house Raya ni?</p>
               <div className="flex flex-col gap-3">
                 {[
                   { value: 'yes', letter: 'Y', label: 'Datang! Insya-Allah 🤲', sub: 'Confirm hadir' },
-                  { value: 'no', letter: 'N', label: 'Tak dapat la kali ni 😢', sub: 'Tak hadir' },
+                  { value: 'no',  letter: 'N', label: 'Tak dapat la kali ni 😢', sub: 'Tak hadir' },
                 ].map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => {
                       setData(d => ({ ...d, attending: opt.value as 'yes' | 'no' }));
-                      const next = opt.value === 'no' ? 3 : 1;
-                      setTimeout(() => navigate(next, 'up'), 150);
+                      setTimeout(() => navigate(opt.value === 'no' ? 5 : 2, 'up'), 150);
                     }}
                     className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all group ${
                       data.attending === opt.value
@@ -273,9 +320,7 @@ export default function RsvpPage() {
                       data.attending === opt.value
                         ? 'bg-amber-400 border-amber-400 text-emerald-950'
                         : 'border-emerald-700 text-emerald-400 group-hover:border-emerald-400'
-                    }`}>
-                      {opt.letter}
-                    </span>
+                    }`}>{opt.letter}</span>
                     <div>
                       <p className="text-white font-semibold">{opt.label}</p>
                       <p className="text-emerald-500 text-sm">{opt.sub}</p>
@@ -286,24 +331,64 @@ export default function RsvpPage() {
             </div>
           )}
 
-          {/* Step 1: Guest count */}
-          {step === 1 && (
+          {/* Step 2: Time slot */}
+          {step === 2 && (
             <div>
               <p className="text-amber-400 text-sm font-semibold mb-2 flex items-center gap-2">
-                <span>02</span>
-                <span className="text-amber-600">→</span>
+                <span>03</span><span className="text-amber-600">→</span>
               </p>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">
                 Best tu! 🙌
               </h2>
-              <p className="text-emerald-300 text-xl mb-8">Berapa orang datang sekali?</p>
+              <p className="text-emerald-300 text-xl mb-8">
+                Agak-agak pukul berapa nak datang?
+              </p>
+              <div className="flex flex-col gap-3">
+                {TIME_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setData(d => ({ ...d, time_slot: opt.value }));
+                      setTimeout(() => navigate(3, 'up'), 150);
+                    }}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all group ${
+                      data.time_slot === opt.value
+                        ? 'border-amber-400 bg-amber-400/10'
+                        : 'border-emerald-800 hover:border-emerald-500 bg-emerald-950/40'
+                    }`}
+                  >
+                    <span className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold shrink-0 border ${
+                      data.time_slot === opt.value
+                        ? 'bg-amber-400 border-amber-400 text-emerald-950'
+                        : 'border-emerald-700 text-emerald-400 group-hover:border-emerald-400'
+                    }`}>{opt.letter}</span>
+                    <div>
+                      <p className="text-white font-semibold">{opt.label}</p>
+                      <p className="text-emerald-500 text-sm">{opt.sub}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Guest count */}
+          {step === 3 && (
+            <div>
+              <p className="text-amber-400 text-sm font-semibold mb-2 flex items-center gap-2">
+                <span>04</span><span className="text-amber-600">→</span>
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">
+                Berapa orang datang? 👥
+              </h2>
+              <p className="text-emerald-300 text-xl mb-8">Kira semua sekali ya</p>
               <div className="flex flex-col gap-3">
                 {GUEST_OPTIONS.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => {
                       setData(d => ({ ...d, guest_count: opt.value }));
-                      setTimeout(() => navigate(2, 'up'), 150);
+                      setTimeout(() => navigate(4, 'up'), 150);
                     }}
                     className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all group ${
                       data.guest_count === opt.value
@@ -315,9 +400,7 @@ export default function RsvpPage() {
                       data.guest_count === opt.value
                         ? 'bg-amber-400 border-amber-400 text-emerald-950'
                         : 'border-emerald-700 text-emerald-400 group-hover:border-emerald-400'
-                    }`}>
-                      {opt.letter}
-                    </span>
+                    }`}>{opt.letter}</span>
                     <div>
                       <p className="text-white font-semibold">{opt.label}</p>
                       <p className="text-emerald-500 text-sm">{opt.sub}</p>
@@ -328,12 +411,11 @@ export default function RsvpPage() {
             </div>
           )}
 
-          {/* Step 2: Car plate */}
-          {step === 2 && (
+          {/* Step 4: Car plate */}
+          {step === 4 && (
             <div>
               <p className="text-amber-400 text-sm font-semibold mb-2 flex items-center gap-2">
-                <span>03</span>
-                <span className="text-amber-600">→</span>
+                <span>05</span><span className="text-amber-600">→</span>
               </p>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">
                 Nombor plate kereta? 🚗
@@ -363,11 +445,11 @@ export default function RsvpPage() {
             </div>
           )}
 
-          {/* Step 3: Message */}
-          {step === 3 && (
+          {/* Step 5: Message */}
+          {step === 5 && (
             <div>
               <p className="text-amber-400 text-sm font-semibold mb-2 flex items-center gap-2">
-                <span>{data.attending === 'no' ? '02' : '04'}</span>
+                <span>{data.attending === 'no' ? '03' : '06'}</span>
                 <span className="text-amber-600">→</span>
               </p>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">
@@ -384,20 +466,14 @@ export default function RsvpPage() {
                 placeholder="Selamat Hari Raya! Maaf zahir batin..."
                 className="w-full bg-transparent border-b-2 border-emerald-600 focus:border-amber-400 text-white text-xl py-3 outline-none placeholder:text-emerald-800 transition-colors caret-amber-400 resize-none"
               />
-              {error && (
-                <p className="text-red-400 text-sm mt-3">⚠️ {error}</p>
-              )}
+              {error && <p className="text-red-400 text-sm mt-3">⚠️ {error}</p>}
               <div className="mt-8">
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
                   className="bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-emerald-950 font-bold px-8 py-4 rounded-lg transition-all text-base flex items-center gap-2"
                 >
-                  {submitting ? (
-                    <>Menghantar...</>
-                  ) : (
-                    <>Hantar RSVP 🌙</>
-                  )}
+                  {submitting ? <>Menghantar...</> : <>Hantar RSVP 🌙</>}
                 </button>
                 <p className="text-emerald-700 text-xs mt-3">Shift + Enter untuk baris baru</p>
               </div>
@@ -417,9 +493,10 @@ export default function RsvpPage() {
         >
           ▲
         </button>
-        {step === 2 && (
+        {(step === 0 || step === 4) && (
           <button
             onClick={goNext}
+            disabled={step === 0 && !data.name.trim()}
             className="w-10 h-10 rounded-lg bg-emerald-900 hover:bg-emerald-800 disabled:opacity-20 text-white flex items-center justify-center transition-all"
             title="Seterusnya"
           >
@@ -428,7 +505,6 @@ export default function RsvpPage() {
         )}
       </div>
 
-      {/* Watermark */}
       <div className="fixed bottom-6 left-6 text-emerald-900 text-xs">
         Raya Open House 🌙
       </div>

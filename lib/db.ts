@@ -2,7 +2,9 @@ import { put, list, del } from '@vercel/blob';
 
 export type RSVP = {
   id: string;
+  name: string;
   attending: 'yes' | 'no';
+  time_slot: string | null;
   guest_count: number | null;
   car_plate: string | null;
   message: string | null;

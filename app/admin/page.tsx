@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 
 type RSVP = {
   id: string;
+  name: string;
   attending: 'yes' | 'no';
+  time_slot: string | null;
   guest_count: number | null;
   car_plate: string | null;
   message: string | null;
@@ -47,16 +49,14 @@ export default function AdminPage() {
     fetchRsvps(secret);
   }
 
-  async function handleDelete(id: string, index: number) {
-    if (!confirm(`Delete RSVP #${index + 1}?`)) return;
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Delete RSVP from ${name}?`)) return;
     setDeletingId(id);
     try {
       const res = await fetch(`/api/rsvps/${id}?secret=${encodeURIComponent(secret)}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
-        setRsvps(prev => prev.filter(r => r.id !== id));
-      }
+      if (res.ok) setRsvps(prev => prev.filter(r => r.id !== id));
     } catch {
       alert('Failed to delete.');
     }
@@ -66,7 +66,9 @@ export default function AdminPage() {
   function startEdit(r: RSVP) {
     setEditingId(r.id);
     setEditForm({
+      name: r.name,
       attending: r.attending,
+      time_slot: r.time_slot ?? '',
       guest_count: r.guest_count,
       car_plate: r.car_plate ?? '',
       message: r.message ?? '',
@@ -81,6 +83,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...editForm,
+          time_slot: editForm.time_slot || null,
           car_plate: editForm.car_plate || null,
           message: editForm.message || null,
         }),
@@ -105,6 +108,13 @@ export default function AdminPage() {
   const attending = rsvps.filter(r => r.attending === 'yes');
   const notAttending = rsvps.filter(r => r.attending === 'no');
   const totalGuests = attending.reduce((sum, r) => sum + (r.guest_count ?? 0), 0);
+
+  // Group attending by time slot
+  const byTimeSlot = attending.reduce<Record<string, number>>((acc, r) => {
+    const slot = r.time_slot ?? 'Unknown';
+    acc[slot] = (acc[slot] ?? 0) + 1;
+    return acc;
+  }, {});
 
   if (!authenticated) {
     return (
@@ -153,7 +163,7 @@ export default function AdminPage() {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-emerald-500">
             <p className="text-3xl font-bold text-emerald-600">{attending.length}</p>
             <p className="text-sm text-gray-500 mt-1">✅ Datang</p>
@@ -169,6 +179,21 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Time slot breakdown */}
+        {Object.keys(byTimeSlot).length > 0 && (
+          <div className="bg-white rounded-2xl shadow p-5 mb-6">
+            <h2 className="font-semibold text-gray-700 mb-3">⏰ Agihan Masa Ketibaan</h2>
+            <div className="flex flex-wrap gap-3">
+              {Object.entries(byTimeSlot).map(([slot, count]) => (
+                <div key={slot} className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
+                  <span className="text-amber-700 font-bold text-lg">{count}</span>
+                  <span className="text-gray-600 text-sm">{slot}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* RSVP table */}
         <div className="bg-white rounded-2xl shadow overflow-hidden">
           <div className="p-5 border-b border-gray-100">
@@ -182,11 +207,13 @@ export default function AdminPage() {
                 <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
                   <tr>
                     <th className="px-4 py-3 text-left">#</th>
+                    <th className="px-4 py-3 text-left">Nama</th>
                     <th className="px-4 py-3 text-left">Hadir</th>
+                    <th className="px-4 py-3 text-left">Masa</th>
                     <th className="px-4 py-3 text-left">Orang</th>
                     <th className="px-4 py-3 text-left">Plate</th>
                     <th className="px-4 py-3 text-left">Ucapan</th>
-                    <th className="px-4 py-3 text-left">Masa</th>
+                    <th className="px-4 py-3 text-left">Submitted</th>
                     <th className="px-4 py-3 text-left">Tindakan</th>
                   </tr>
                 </thead>
@@ -198,6 +225,13 @@ export default function AdminPage() {
                       {editingId === r.id ? (
                         <>
                           <td className="px-4 py-2">
+                            <input
+                              value={editForm.name ?? ''}
+                              onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                              className="border border-gray-300 rounded-lg px-2 py-1 w-full text-gray-800 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                            />
+                          </td>
+                          <td className="px-4 py-2">
                             <select
                               value={editForm.attending ?? 'yes'}
                               onChange={e => setEditForm(f => ({ ...f, attending: e.target.value as 'yes' | 'no' }))}
@@ -205,6 +239,19 @@ export default function AdminPage() {
                             >
                               <option value="yes">✅ Datang</option>
                               <option value="no">❌ Tak datang</option>
+                            </select>
+                          </td>
+                          <td className="px-4 py-2">
+                            <select
+                              value={editForm.time_slot ?? ''}
+                              onChange={e => setEditForm(f => ({ ...f, time_slot: e.target.value }))}
+                              className="border border-gray-300 rounded-lg px-2 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                            >
+                              <option value="">—</option>
+                              <option value="1pm - 3pm">1pm – 3pm</option>
+                              <option value="3pm - 5pm">3pm – 5pm</option>
+                              <option value="5pm - 7pm">5pm – 7pm</option>
+                              <option value="7pm - 8pm">7pm – 8pm</option>
                             </select>
                           </td>
                           <td className="px-4 py-2">
@@ -253,6 +300,7 @@ export default function AdminPage() {
                         </>
                       ) : (
                         <>
+                          <td className="px-4 py-3 font-medium text-gray-800">{r.name}</td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                               r.attending === 'yes' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
@@ -260,9 +308,14 @@ export default function AdminPage() {
                               {r.attending === 'yes' ? '✅ Datang' : '❌ Tak datang'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center text-gray-700">
-                            {r.guest_count ?? '—'}
+                          <td className="px-4 py-3">
+                            {r.time_slot ? (
+                              <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                                {r.time_slot}
+                              </span>
+                            ) : '—'}
                           </td>
+                          <td className="px-4 py-3 text-center text-gray-700">{r.guest_count ?? '—'}</td>
                           <td className="px-4 py-3 text-gray-500 font-mono tracking-wider">{r.car_plate || '—'}</td>
                           <td className="px-4 py-3 text-gray-500 max-w-xs truncate">{r.message || '—'}</td>
                           <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
@@ -277,7 +330,7 @@ export default function AdminPage() {
                                 ✏️ Edit
                               </button>
                               <button
-                                onClick={() => handleDelete(r.id, i)}
+                                onClick={() => handleDelete(r.id, r.name)}
                                 disabled={deletingId === r.id}
                                 className="bg-red-100 hover:bg-red-200 disabled:opacity-50 text-red-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
                               >
