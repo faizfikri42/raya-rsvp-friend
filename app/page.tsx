@@ -74,6 +74,7 @@ export default function RsvpPage() {
 
   function goNext() {
     if (step === 0 && !data.name.trim()) return;
+    if (step === 0) { navigate(1, 'up'); return; }
     if (step === 4) { navigate(5, 'up'); return; }
     if (step === 5) { handleSubmit(); return; }
   }
