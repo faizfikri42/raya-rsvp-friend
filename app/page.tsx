@@ -30,10 +30,14 @@ const GUEST_OPTIONS = [
 ];
 
 const TIME_OPTIONS = [
-  { value: '1pm - 3pm', letter: 'A', label: '1pm – 3pm', sub: 'Tengah hari' },
-  { value: '3pm - 5pm', letter: 'B', label: '3pm – 5pm', sub: 'Petang awal' },
-  { value: '5pm - 7pm', letter: 'C', label: '5pm – 7pm', sub: 'Petang lewat' },
-  { value: '7pm - 8pm', letter: 'D', label: '7pm – 8pm', sub: 'Malam' },
+  { value: '1pm', letter: 'A', label: 'Pukul 1pm', sub: 'Tengah hari' },
+  { value: '2pm', letter: 'B', label: 'Pukul 2pm', sub: 'Tengah hari' },
+  { value: '3pm', letter: 'C', label: 'Pukul 3pm', sub: 'Petang' },
+  { value: '4pm', letter: 'D', label: 'Pukul 4pm', sub: 'Petang' },
+  { value: '5pm', letter: 'E', label: 'Pukul 5pm', sub: 'Petang' },
+  { value: '6pm', letter: 'F', label: 'Pukul 6pm', sub: 'Petang lewat' },
+  { value: '7pm', letter: 'G', label: 'Pukul 7pm', sub: 'Malam' },
+  { value: '8pm', letter: 'H', label: 'Pukul 8pm', sub: 'Malam' },
 ];
 
 // Steps: 0=name, 1=attending, 2=time_slot(yes), 3=guest_count(yes), 4=car_plate(yes), 5=message
