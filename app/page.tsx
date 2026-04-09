@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 
 // ─── CUSTOMIZE YOUR EVENT DETAILS HERE ────────────────────────────────────────
 const EVENT_HOST = 'Open House Raya';          // e.g. "Hafiz & Adibah"
 const EVENT_DATE = 'XX April 2026';            // e.g. "20 April 2026"
 const EVENT_DATE_SUB = '1 Tengah Hari sampai 8 Malam';
-const GOOGLE_MAPS_URL = 'https://maps.google.com'; // paste your Google Maps share link
-const WAZE_URL = 'https://waze.com';               // paste your Waze share link
+const GOOGLE_MAPS_URL = 'https://maps.app.goo.gl/Dp4HaoAa6SkdJfBy6?g_st=iw';
+const WAZE_URL = 'https://waze.com/ul/hw282t2skp';
 // ──────────────────────────────────────────────────────────────────────────────
 
 type FormData = {
@@ -226,7 +227,6 @@ export default function RsvpPage() {
     return (
       <div className="min-h-screen bg-[#0d2418] flex items-center justify-center p-6">
         <div className="text-center max-w-md animate-slide-up">
-          <div className="text-5xl mb-4">🌙✨</div>
           <h2 className="text-4xl font-bold text-white mb-2">
             Terima kasih, {data.name.split(' ')[0]}!
           </h2>
@@ -235,6 +235,14 @@ export default function RsvpPage() {
           ) : (
             <p className="text-emerald-300 text-lg mb-6">Takpe, lain kali kita jumpa! 😊</p>
           )}
+          <div className="relative w-64 h-80 mx-auto mb-6">
+            <Image
+              src="/raya-cat.jpeg"
+              alt="Selamat Hari Raya"
+              fill
+              className="object-cover rounded-2xl shadow-xl shadow-black/40"
+            />
+          </div>
           <p className="text-amber-400 font-semibold text-lg">Selamat Hari Raya Aidilfitri 🌟</p>
           <p className="text-emerald-600 text-sm mt-1">Maaf Zahir & Batin</p>
         </div>
