@@ -248,14 +248,11 @@ export default function AdminPage() {
                               className="border border-gray-300 rounded-lg px-2 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-emerald-400"
                             >
                               <option value="">—</option>
-                              <option value="1pm">Pukul 1pm</option>
-                              <option value="2pm">Pukul 2pm</option>
                               <option value="3pm">Pukul 3pm</option>
                               <option value="4pm">Pukul 4pm</option>
                               <option value="5pm">Pukul 5pm</option>
                               <option value="6pm">Pukul 6pm</option>
                               <option value="7pm">Pukul 7pm</option>
-                              <option value="8pm">Pukul 8pm</option>
                             </select>
                           </td>
                           <td className="px-4 py-2">

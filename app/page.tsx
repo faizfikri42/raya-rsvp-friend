@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 
 // ─── CUSTOMIZE YOUR EVENT DETAILS HERE ────────────────────────────────────────
-const EVENT_HOST = 'Open House Raya';          // e.g. "Hafiz & Adibah"
-const EVENT_DATE = 'XX April 2026';            // e.g. "20 April 2026"
-const EVENT_DATE_SUB = '1 Tengah Hari sampai 8 Malam';
+const EVENT_DATE = '18 April 2026, Sabtu';
+const EVENT_TIME = '3:00 Petang – 7:00 Petang';
+const EVENT_ADDRESS_1 = '48, Jalan Eco Majestic 9/2D';
+const EVENT_ADDRESS_2 = 'Semenyih';
 const GOOGLE_MAPS_URL = 'https://maps.app.goo.gl/Dp4HaoAa6SkdJfBy6?g_st=iw';
 const WAZE_URL = 'https://waze.com/ul/hw282t2skp';
 // ──────────────────────────────────────────────────────────────────────────────
@@ -30,14 +31,11 @@ const GUEST_OPTIONS = [
 ];
 
 const TIME_OPTIONS = [
-  { value: '1pm', letter: 'A', label: 'Pukul 1pm', sub: 'Tengah hari' },
-  { value: '2pm', letter: 'B', label: 'Pukul 2pm', sub: 'Tengah hari' },
-  { value: '3pm', letter: 'C', label: 'Pukul 3pm', sub: 'Petang' },
-  { value: '4pm', letter: 'D', label: 'Pukul 4pm', sub: 'Petang' },
-  { value: '5pm', letter: 'E', label: 'Pukul 5pm', sub: 'Petang' },
-  { value: '6pm', letter: 'F', label: 'Pukul 6pm', sub: 'Petang lewat' },
-  { value: '7pm', letter: 'G', label: 'Pukul 7pm', sub: 'Malam' },
-  { value: '8pm', letter: 'H', label: 'Pukul 8pm', sub: 'Malam' },
+  { value: '3pm', letter: 'A', label: 'Pukul 3pm', sub: 'Petang' },
+  { value: '4pm', letter: 'B', label: 'Pukul 4pm', sub: 'Petang' },
+  { value: '5pm', letter: 'C', label: 'Pukul 5pm', sub: 'Petang' },
+  { value: '6pm', letter: 'D', label: 'Pukul 6pm', sub: 'Petang lewat' },
+  { value: '7pm', letter: 'E', label: 'Pukul 7pm', sub: 'Malam' },
 ];
 
 // Steps: 0=name, 1=attending, 2=time_slot(yes), 3=guest_count(yes), 4=car_plate(yes), 5=message
@@ -145,44 +143,51 @@ export default function RsvpPage() {
     return (
       <div className="min-h-screen bg-[#0d2418] flex items-center justify-center p-6">
         <div className="text-center max-w-lg animate-slide-up">
-          <div className="flex justify-center gap-6 mb-6 text-4xl">
-            <span>🏮</span>
-            <span className="text-5xl">🌙</span>
-            <span>🏮</span>
+
+          {/* Arabic greeting */}
+          <p className="text-amber-300 text-3xl mb-2" style={{ fontFamily: 'serif' }}>
+            السَّلَامُ عَلَيْكُمْ
+          </p>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 justify-center mb-5">
+            <div className="h-px w-12 bg-emerald-700" />
+            <span className="text-amber-500 text-lg">🏮</span>
+            <div className="h-px w-12 bg-emerald-700" />
           </div>
 
-          <p className="text-amber-400 text-sm font-semibold tracking-widest uppercase mb-3">
-            You&apos;re invited
-          </p>
-
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4">
-            Open House<br />
-            <span className="text-amber-400">{EVENT_HOST}</span>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-2">
+            Jemputan
           </h1>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-amber-400 leading-tight mb-5">
+            Makan-Makan Raya
+          </h2>
 
-          <p className="text-emerald-300 text-lg leading-relaxed mb-2">
-            Assalamualaikum & Selamat Datang! 🤗
+          <p className="text-emerald-300 text-base italic leading-relaxed mb-1">
+            Dengan segala hormatnya,
           </p>
-          <p className="text-emerald-400 text-base leading-relaxed mb-8">
-            Kami dengan penuh kegembiraan menjemput korang ke majlis<br className="hidden md:block" />
-            <span className="text-white font-semibold"> Open House Hari Raya Aidilfitri</span> kami.<br />
-            Jangan malu, jangan segan — makan banyak-banyak! 😄
+          <p className="text-emerald-300 text-base italic leading-relaxed mb-8">
+            kami menjemput anda ke majlis kami.
           </p>
 
-          <div className="bg-emerald-950/60 border border-emerald-800 rounded-2xl px-6 py-5 mb-8 text-left space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="text-xl mt-0.5">📅</span>
-              <div>
-                <p className="text-white font-semibold">{EVENT_DATE}</p>
-                <p className="text-emerald-400 text-sm">{EVENT_DATE_SUB}</p>
-              </div>
+          {/* Event details card */}
+          <div className="bg-emerald-950/60 border border-emerald-800 rounded-2xl px-6 py-5 mb-6 text-left space-y-4">
+            <div className="flex items-start gap-4">
+              <span className="text-emerald-500 font-bold text-sm w-16 shrink-0 pt-0.5">Tarikh</span>
+              <p className="text-white font-semibold">{EVENT_DATE}</p>
             </div>
             <div className="h-px bg-emerald-900" />
-            <div className="flex items-start gap-3">
-              <span className="text-xl mt-0.5">📍</span>
+            <div className="flex items-start gap-4">
+              <span className="text-emerald-500 font-bold text-sm w-16 shrink-0 pt-0.5">Masa</span>
+              <p className="text-white font-semibold">{EVENT_TIME}</p>
+            </div>
+            <div className="h-px bg-emerald-900" />
+            <div className="flex items-start gap-4">
+              <span className="text-emerald-500 font-bold text-sm w-16 shrink-0 pt-0.5">Tempat</span>
               <div>
-                <p className="text-white font-semibold mb-2">Lokasi</p>
-                <div className="flex gap-2 flex-wrap">
+                <p className="text-white font-semibold">{EVENT_ADDRESS_1}</p>
+                <p className="text-emerald-300 italic text-sm">{EVENT_ADDRESS_2}</p>
+                <div className="flex gap-2 flex-wrap mt-3">
                   <a
                     href={GOOGLE_MAPS_URL}
                     target="_blank"
@@ -206,9 +211,8 @@ export default function RsvpPage() {
             </div>
           </div>
 
-          <p className="text-emerald-500 text-sm mb-6">
-            Ambik masa 1 minit je untuk isi borang ni.<br />
-            Tolong confirm supaya kami boleh bersedia untuk korang! 🙏
+          <p className="text-emerald-400 text-base italic mb-6">
+            Jemput yer datang. 🙏
           </p>
 
           <button
@@ -218,9 +222,18 @@ export default function RsvpPage() {
             RSVP Sekarang &nbsp;→
           </button>
 
-          <p className="text-emerald-800 text-xs mt-8">
+          {/* Bottom ornament */}
+          <div className="flex items-center gap-3 justify-center mt-8">
+            <div className="h-px w-10 bg-emerald-800" />
+            <span className="text-emerald-700 text-lg">🏮</span>
+            <span className="text-emerald-800 text-sm">☽★</span>
+            <span className="text-emerald-700 text-lg">🏮</span>
+            <div className="h-px w-10 bg-emerald-800" />
+          </div>
+          <p className="text-emerald-800 text-xs mt-3">
             Selamat Hari Raya Aidilfitri · Maaf Zahir & Batin
           </p>
+
         </div>
       </div>
     );
