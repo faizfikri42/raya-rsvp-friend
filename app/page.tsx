@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 // ─── CUSTOMIZE YOUR EVENT DETAILS HERE ────────────────────────────────────────
 const EVENT_DATE = '18 April 2026, Sabtu';
-const EVENT_TIME = '3:00 Petang – 7:00 Petang';
+const EVENT_TIME = '1:00 Petang – 8:00 Malam';
 const EVENT_ADDRESS_1 = '48, Jalan Eco Majestic 9/2D';
 const EVENT_ADDRESS_2 = 'Semenyih';
 const GOOGLE_MAPS_URL = 'https://maps.app.goo.gl/Dp4HaoAa6SkdJfBy6?g_st=iw';
@@ -31,11 +31,14 @@ const GUEST_OPTIONS = [
 ];
 
 const TIME_OPTIONS = [
-  { value: '3pm', letter: 'A', label: 'Pukul 3pm', sub: 'Petang' },
-  { value: '4pm', letter: 'B', label: 'Pukul 4pm', sub: 'Petang' },
-  { value: '5pm', letter: 'C', label: 'Pukul 5pm', sub: 'Petang' },
-  { value: '6pm', letter: 'D', label: 'Pukul 6pm', sub: 'Petang lewat' },
-  { value: '7pm', letter: 'E', label: 'Pukul 7pm', sub: 'Malam' },
+  { value: '1pm', letter: 'A', label: 'Pukul 1pm', sub: 'Tengah hari' },
+  { value: '2pm', letter: 'B', label: 'Pukul 2pm', sub: 'Tengah hari' },
+  { value: '3pm', letter: 'C', label: 'Pukul 3pm', sub: 'Petang' },
+  { value: '4pm', letter: 'D', label: 'Pukul 4pm', sub: 'Petang' },
+  { value: '5pm', letter: 'E', label: 'Pukul 5pm', sub: 'Petang' },
+  { value: '6pm', letter: 'F', label: 'Pukul 6pm', sub: 'Petang lewat' },
+  { value: '7pm', letter: 'G', label: 'Pukul 7pm', sub: 'Malam' },
+  { value: '8pm', letter: 'H', label: 'Pukul 8pm', sub: 'Malam' },
 ];
 
 // Steps: 0=name, 1=attending, 2=time_slot(yes), 3=guest_count(yes), 4=car_plate(yes), 5=message
