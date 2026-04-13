@@ -99,11 +99,7 @@ export default function AdminPage() {
     setSaving(false);
   }
 
-  useEffect(() => {
-    if (!authenticated) return;
-    const interval = setInterval(() => fetchRsvps(secret), 30000);
-    return () => clearInterval(interval);
-  }, [authenticated, secret]);
+  // Removed auto-refresh — click Refresh button manually to reduce DB calls
 
   const attending = rsvps.filter(r => r.attending === 'yes');
   const notAttending = rsvps.filter(r => r.attending === 'no');
@@ -152,7 +148,7 @@ export default function AdminPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">🌙 Raya RSVP Dashboard</h1>
-            <p className="text-gray-500 text-sm">{rsvps.length} responses · auto-refreshes every 30s</p>
+            <p className="text-gray-500 text-sm">{rsvps.length} responses</p>
           </div>
           <button
             onClick={() => fetchRsvps(secret)}
